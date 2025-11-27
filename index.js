@@ -3,7 +3,7 @@ const { tokenize } = require('./scanner');
 const Parser = require('./parser');
 const { analyzeSemantics } = require('./semantic');
 
-const code = fs.readFileSync('codigo_exemplo.txt', 'utf8');
+const code = fs.readFileSync('codigo_exemplo2.txt', 'utf8');
 
 try {
   const tokens = tokenize(code);
@@ -11,5 +11,7 @@ try {
   const ast = parser.parse();
   analyzeSemantics(ast);
 } catch (err) {
-  console.error("Erro:", err.message);
+  console.error(`\n=== Erro no compilador ===\n${err.message}\n=========================\n`);
+  process.exit(1);
 }
+

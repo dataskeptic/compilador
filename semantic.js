@@ -1,6 +1,32 @@
 function analyzeSemantics(ast) {
-  const symbolTable = {};
+  // Pilha de tabelas de símbolos para escopos
+  const scopeStack = [{}]; // escopo global inicial vazio
   const functionTable = {};
+
+  // Obter tabela atual (topo da pilha)
+  function currentScope() {
+    return scopeStack[scopeStack.length - 1];
+  }
+
+  // Entrar em novo escopo (empilhar)
+  function enterScope() {
+    scopeStack.push({});
+  }
+
+  // Sair do escopo atual (desempilhar)
+  function exitScope() {
+    scopeStack.pop();
+  }
+
+  // Resolver variável buscando em escopos de dentro para fora
+  function resolveVariable(name) {
+    for (let i = scopeStack.length - 1; i >= 0; i--) {
+      if (scopeStack[i][name]) {
+        return scopeStack[i][name];
+      }
+    }
+    return null; // não encontrado
+  }
 
   function resolveType(expr) {
     if (!expr) return null;
@@ -8,10 +34,11 @@ function analyzeSemantics(ast) {
       return expr.type;
     }
     if (expr.type === "identifier") {
-      if (!symbolTable[expr.value]) {
+      const symbol = resolveVariable(expr.value);
+      if (!symbol) {
         throw new Error(`Erro semântico: variável '${expr.value}' não declarada na linha ${expr.line}`);
       }
-      return symbolTable[expr.value].type;
+      return symbol.type;
     }
     if (expr.type === "operation") {
       const leftType = resolveType(expr.left);
@@ -33,45 +60,97 @@ function analyzeSemantics(ast) {
     }
   }
 
-  for (let cmd of ast) {
-    if (!cmd) continue;
+  // Analisar lista de comandos, respeitando escopo
+  function analyzeCommands(commands) {
+    for (let cmd of commands) {
+      if (!cmd) continue;
 
-    if (cmd.type === "varDecl") {
-      const nome = cmd.name;
-      if (symbolTable[nome]) {
-        throw new Error(`Erro semântico: variável '${nome}' já declarada na linha ${cmd.line}`);
+      switch (cmd.type) {
+        case "varDecl":
+        case "constDecl":
+          if (currentScope()[cmd.name]) {
+            throw new Error(`Erro semântico: variável '${cmd.name}' já declarada no escopo atual na linha ${cmd.line}`);
+          }
+          currentScope()[cmd.name] = { type: resolveType(cmd.value), isConst: cmd.type === "constDecl" };
+          break;
+
+        case "assignment":
+          const symbol = resolveVariable(cmd.name);
+          if (!symbol) {
+            throw new Error(`Erro semântico: variável '${cmd.name}' não declarada antes do uso (linha ${cmd.line})`);
+          }
+          if (symbol.isConst) {
+            throw new Error(`Erro semântico: não é permitido reatribuir constante '${cmd.name}' (linha ${cmd.line})`);
+          }
+          checkType(symbol.type, resolveType(cmd.value), cmd.line);
+          break;
+
+        case "userFunction":
+          if (functionTable[cmd.name]) {
+            throw new Error(`Erro semântico: função '${cmd.name}' já declarada na linha ${cmd.line}`);
+          }
+          functionTable[cmd.name] = { params: cmd.params, body: cmd.body };
+
+          // Criar escopo para a função e parâmetros
+          enterScope();
+          for (const paramName of cmd.params) {
+            if (currentScope()[paramName]) {
+              throw new Error(`Erro semântico: parâmetro '${paramName}' já declarado na função '${cmd.name}' na linha ${cmd.line}`);
+            }
+            currentScope()[paramName] = { type: "unknown", isConst: false }; // tipo params pode ser genérico
+          }
+          analyzeCommands(cmd.body);
+          exitScope();
+          break;
+
+        case "if":
+          analyzeExpression(cmd.condition);
+          enterScope();
+          analyzeCommands(cmd.thenBlock);
+          exitScope();
+          if (cmd.elseBlock) {
+            enterScope();
+            analyzeCommands(cmd.elseBlock);
+            exitScope();
+          }
+          break;
+
+        case "while":
+          analyzeExpression(cmd.condition);
+          enterScope();
+          analyzeCommands(cmd.body);
+          exitScope();
+          break;
+
+        case "for":
+          enterScope();
+          if (cmd.init) analyzeCommands([cmd.init]);
+          analyzeExpression(cmd.condition);
+          analyzeExpression(cmd.next);
+          analyzeCommands(cmd.body);
+          exitScope();
+          break;
+
+        case "nativeCall":
+          if (!["print", "console", "prompt"].includes(cmd.name)) {
+            throw new Error(`Erro semântico: função nativa '${cmd.name}' não reconhecida (linha ${cmd.line})`);
+          }
+          // Opcional: validar argumentos
+          cmd.args.forEach(analyzeExpression);
+          break;
+
+        default:
+          // Pode expandir para outros tipos
+          break;
       }
-      symbolTable[nome] = { type: resolveType(cmd.value), isConst: false };
-    } else if (cmd.type === "constDecl") {
-      const nome = cmd.name;
-      if (symbolTable[nome]) {
-        throw new Error(`Erro semântico: constante '${nome}' já declarada na linha ${cmd.line}`);
-      }
-      symbolTable[nome] = { type: resolveType(cmd.value), isConst: true };
-    } else if (cmd.type === "assignment") {
-      const nome = cmd.name;
-      if (!symbolTable[nome]) {
-        throw new Error(`Erro semântico: variável '${nome}' não declarada antes do uso (linha ${cmd.line})`);
-      }
-      if (symbolTable[nome].isConst) {
-        throw new Error(`Erro semântico: não é permitido reatribuir constante '${nome}' (linha ${cmd.line})`);
-      }
-      checkType(symbolTable[nome].type, resolveType(cmd.value), cmd.line);
-    } else if (cmd.type === "userFunction") {
-      const fname = cmd.name;
-      if (functionTable[fname]) {
-        throw new Error(`Erro semântico: função '${fname}' já declarada na linha ${cmd.line}`);
-      }
-      functionTable[fname] = { params: cmd.params, body: cmd.body };
-      // Poderia analisar corpo da função recursivamente aqui
-    } else if (cmd.type === "nativeCall") {
-      if (!["print", "console", "prompt"].includes(cmd.name)) {
-        throw new Error(`Erro semântico: função nativa '${cmd.name}' não reconhecida (linha ${cmd.line})`);
-      }
-      // Opcional: checar argumentos da função nativa
     }
-    // Extenda para arrays, objetos, laços e outras estruturas conforme a necessidade
   }
+
+  function analyzeExpression(expr) {
+    resolveType(expr);
+  }
+
+  analyzeCommands(ast);
 
   console.log("Programa semanticamente válido!");
 }

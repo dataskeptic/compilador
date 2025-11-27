@@ -33,8 +33,12 @@ function tokenize(input) {
       }
     }
     if (!matched) {
-      throw new Error("Token inválido encontrado na linha " + line + ": " + remaining.slice(0, 10));
+      // Encontra o final da linha atual para mostrar contexto completo
+      const endOfLine = remaining.indexOf('\n');
+      const snippet = endOfLine > 0 ? remaining.slice(0, endOfLine) : remaining.slice(0, 50);
+      throw new Error(`Erro léxico na linha ${line}: token inválido perto de '${snippet}'`);
     }
+
   }
   return tokens;
 }

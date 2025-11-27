@@ -8,7 +8,7 @@ function Parser(tokens) {
   function consume(type, value = null) {
     const token = tokens[current];
     if (!token || token.type !== type || (value !== null && token.value !== value)) {
-      throw new Error(`Erro de sintaxe: esperado ${type}${value ? ' ' + value : ''} na linha ${token ? token.line : '?'} (encontrado: ${token ? token.value : 'fim do arquivo'})`);
+      throw new Error(`Erro de sintaxe na linha ${token ? token.line : '?'}: esperado token do tipo '${type}'${value ? " com valor '" + value + "'" : ""}, mas encontrado '${token ? token.value : 'fim do arquivo'}'`);
     }
     current++;
     return token;
