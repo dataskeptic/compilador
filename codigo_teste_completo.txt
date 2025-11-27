@@ -1,0 +1,64 @@
+// ========================================
+// Teste completo da especificacao
+// ========================================
+
+// 1. Tipos de Dados
+let idade = 25;
+const nome = "Lemuel";
+let ativo = true;
+let lista = [1, 2, 3];
+let pessoa = {nome: "Ana", idade: 30};
+let vazio = null;
+let indefinido = undefined;
+
+// 2. Operadores e Precedencia
+let total = (5 + 3) * 2;
+let comparacao = total > 10 && true;
+let negacao = !false;
+let modulo = 10 % 3;
+
+// 3. Declaracao de Variaveis e Escopo
+let contador = 0;
+const PI = 3.14;
+
+if (contador < 10) {
+    let interno = contador * 2;
+    print(interno);
+}
+
+// 4. Declaracao de Funcoes
+function soma(a, b) {
+    return a + b;
+}
+
+let resultado = soma(3, 7);
+print(resultado);
+
+// 5. Funcoes Nativas
+print("Teste");
+let num = parseInt("123");
+print(typeof(num));
+
+// 6. Sentencas de Controle
+let i = 0;
+while (i < 5) {
+    print(i);
+    i = i + 1;
+}
+
+for (let j = 0; j < 3; j = j + 1) {
+    print(j);
+}
+
+if (i === 5) {
+    print("Fim da contagem");
+} else {
+    print("Contagem incompleta");
+}
+
+// 7. Arrays heterogeneos (permitido pela especificacao)
+let misto = [1, "texto", true];
+
+// 8. Acesso a array com indice valido
+print(lista[0]);
+print(lista[2]);

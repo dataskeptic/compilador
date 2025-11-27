@@ -6,29 +6,15 @@ const keywords = [
 
 const keywordRegex = new RegExp("^(" + keywords.join("|") + ")\\b");
 
+// COMMENT deve vir antes de OPERATOR pra não confundir // com /
 const tokenPatterns = [
-  // Palavras‑chave
-  { type: "KEYWORD", regex: keywordRegex },
-
-  // Números
-  { type: "NUMBER", regex: /^[0-9]+(\.[0-9]+)?/ },
-
-  // Identificadores
-  { type: "IDENTIFIER", regex: /^[a-zA-Z_][a-zA-Z0-9_]*/ },
-
-  // Strings (uma linha)
-  { type: "STRING", regex: /^"([^"\n]*)"|^'([^'\n]*)'/ },
-
-  // Operadores (inclui ==, ===, !=, !==, &&, ||)
-  { type: "OPERATOR", regex: /^(===|!==|==|!=|>=|<=|&&|\|\||[+\-*/%!=<>])/ },
-
-  // Pontuação (agora com [, ], { }, :, . e ;)
-  { type: "PUNCTUATION", regex: /^(\{|\}|\[|\]|\(|\)|;|,|\.|:)/ },
-
-  // Comentário de linha (opcional, mas seguro)
   { type: "COMMENT", regex: /^\/\/[^\n]*/, ignore: true },
-
-  // Espaços em branco (inclui tabs e espaços, mas NÃO \n)
+  { type: "KEYWORD", regex: keywordRegex },
+  { type: "NUMBER", regex: /^[0-9]+(\.[0-9]+)?/ },
+  { type: "IDENTIFIER", regex: /^[a-zA-Z_][a-zA-Z0-9_]*/ },
+  { type: "STRING", regex: /^"([^"\n]*)"|^'([^'\n]*)'/ },
+  { type: "OPERATOR", regex: /^(===|!==|==|!=|>=|<=|&&|\|\||[+\-*/%!=<>])/ },
+  { type: "PUNCTUATION", regex: /^(\{|\}|\[|\]|\(|\)|;|,|\.|:)/ },
   { type: "WHITESPACE", regex: /^[ \t\r]+/, ignore: true },
 ];
 
