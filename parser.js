@@ -49,9 +49,10 @@ function Parser(tokens) {
       token.type === "KEYWORD" &&
       ["print", "console", "prompt", "parseInt", "parseFloat", "typeof"].includes(token.value)
     ) {
-      return funcCall();
+      return nativeFuncCall();
     } else if (token.type === "IDENTIFIER") {
-      return assignment();
+      // Verificar se é chamada de função ou atribuição
+      return identifierStatement();
     } else {
       throw new Error(`Declaracao desconhecida na linha ${token.line}: ${token.value}`);
     }
@@ -126,13 +127,32 @@ function Parser(tokens) {
   function forStatement() {
     const tkFor = consume("KEYWORD", "for");
     consume("PUNCTUATION", "(");
+    
+    // Init: let, const ou atribuição
     let init = null;
     if (peek().type === "KEYWORD" && peek().value === "let") init = varDecl();
     else if (peek().type === "KEYWORD" && peek().value === "const") init = constDecl();
     else if (peek().type === "IDENTIFIER") init = assignment();
+    
     const cond = expression();
     consume("PUNCTUATION", ";");
-    const next = expression();
+    
+    // Incremento: atribuição (i = i + 1) ou expressão simples
+    let next = null;
+    if (peek().type === "IDENTIFIER") {
+      const nome = consume("IDENTIFIER");
+      if (peek() && peek().type === "OPERATOR" && peek().value === "=") {
+        consume("OPERATOR", "=");
+        const expr = expression();
+        next = { type: "assignment", name: nome.value, value: expr, line: nome.line };
+      } else {
+        current--;
+        next = expression();
+      }
+    } else {
+      next = expression();
+    }
+    
     consume("PUNCTUATION", ")");
     const body = bloco();
     return { type: "for", init, condition: cond, next, body, line: tkFor.line };
@@ -148,7 +168,7 @@ function Parser(tokens) {
     return { type: "returnStmt", value, line: tkRet.line };
   }
 
-  function funcCall() {
+  function nativeFuncCall() {
     const fname = consume("KEYWORD");
     consume("PUNCTUATION", "(");
     let args = [];
@@ -164,6 +184,34 @@ function Parser(tokens) {
     return { type: "nativeCall", name: fname.value, args, line: fname.line };
   }
 
+  function identifierStatement() {
+    const nome = consume("IDENTIFIER");
+    
+    // Chamada de função
+    if (peek() && peek().type === "PUNCTUATION" && peek().value === "(") {
+      consume("PUNCTUATION", "(");
+      let args = [];
+      if (!(peek().type === "PUNCTUATION" && peek().value === ")")) {
+        args.push(expression());
+        while (peek().type === "PUNCTUATION" && peek().value === ",") {
+          consume("PUNCTUATION", ",");
+          args.push(expression());
+        }
+      }
+      consume("PUNCTUATION", ")");
+      if (peek() && peek().type === "PUNCTUATION" && peek().value === ";") {
+        consume("PUNCTUATION", ";");
+      }
+      return { type: "functionCall", name: nome.value, args, line: nome.line };
+    }
+    
+    // Atribuição
+    consume("OPERATOR", "=");
+    const expr = expression();
+    consume("PUNCTUATION", ";");
+    return { type: "assignment", name: nome.value, value: expr, line: nome.line };
+  }
+
   function bloco() {
     consume("PUNCTUATION", "{");
     const body = [];
@@ -174,81 +222,173 @@ function Parser(tokens) {
     return body;
   }
 
-  // EXPRESSÕES
-
+  // Precedência (menor -> maior): || < && < == != < > >= < + - < * / % < ! < literals
   function expression() {
+    return orExpression();
+  }
+
+  function orExpression() {
+    let left = andExpression();
+    while (peek() && peek().type === "OPERATOR" && peek().value === "||") {
+      const op = consume("OPERATOR");
+      const right = andExpression();
+      left = { type: "operation", operator: op.value, left, right, line: op.line };
+    }
+    return left;
+  }
+
+  function andExpression() {
+    let left = equalityExpression();
+    while (peek() && peek().type === "OPERATOR" && peek().value === "&&") {
+      const op = consume("OPERATOR");
+      const right = equalityExpression();
+      left = { type: "operation", operator: op.value, left, right, line: op.line };
+    }
+    return left;
+  }
+
+  function equalityExpression() {
+    let left = comparisonExpression();
+    while (peek() && peek().type === "OPERATOR" && 
+           ["==", "!=", "===", "!=="].includes(peek().value)) {
+      const op = consume("OPERATOR");
+      const right = comparisonExpression();
+      left = { type: "operation", operator: op.value, left, right, line: op.line };
+    }
+    return left;
+  }
+
+  function comparisonExpression() {
+    let left = additionExpression();
+    while (peek() && peek().type === "OPERATOR" && 
+           ["<", "<=", ">", ">="].includes(peek().value)) {
+      const op = consume("OPERATOR");
+      const right = additionExpression();
+      left = { type: "operation", operator: op.value, left, right, line: op.line };
+    }
+    return left;
+  }
+
+  function additionExpression() {
+    let left = multiplicationExpression();
+    while (peek() && peek().type === "OPERATOR" && 
+           ["+", "-"].includes(peek().value)) {
+      const op = consume("OPERATOR");
+      const right = multiplicationExpression();
+      left = { type: "operation", operator: op.value, left, right, line: op.line };
+    }
+    return left;
+  }
+
+  function multiplicationExpression() {
+    let left = unaryExpression();
+    while (peek() && peek().type === "OPERATOR" && 
+           ["*", "/", "%"].includes(peek().value)) {
+      const op = consume("OPERATOR");
+      const right = unaryExpression();
+      left = { type: "operation", operator: op.value, left, right, line: op.line };
+    }
+    return left;
+  }
+
+  function unaryExpression() {
+    if (peek() && peek().type === "OPERATOR" && peek().value === "!") {
+      const op = consume("OPERATOR");
+      const operand = unaryExpression();
+      return { type: "unaryOperation", operator: op.value, operand, line: op.line };
+    }
+    return primaryExpression();
+  }
+
+  function primaryExpression() {
     const token = peek();
     if (!token) {
       throw new Error("Expressão inválida no fim do arquivo");
     }
 
-    // Literais number
+    // Parênteses
+    if (token.type === "PUNCTUATION" && token.value === "(") {
+      consume("PUNCTUATION", "(");
+      const expr = expression();
+      consume("PUNCTUATION", ")");
+      return expr;
+    }
+
     if (token.type === "NUMBER") {
       current++;
-      let left = { type: "number", value: Number(token.value), line: token.line };
-      while (peek() && peek().type === "OPERATOR") {
-        const op = consume("OPERATOR");
-        const right = expression();
-        left = { type: "operation", operator: op.value, left, right, line: op.line };
-      }
-      return left;
+      return { type: "number", value: Number(token.value), line: token.line };
     }
 
-    // Literais string
     if (token.type === "STRING") {
       current++;
-      let left = { type: "string", value: token.value, line: token.line };
-      while (peek() && peek().type === "OPERATOR") {
-        const op = consume("OPERATOR");
-        const right = expression();
-        left = { type: "operation", operator: op.value, left, right, line: op.line };
-      }
-      return left;
+      return { type: "string", value: token.value, line: token.line };
     }
 
-    // boolean
     if (token.type === "KEYWORD" && (token.value === "true" || token.value === "false")) {
       current++;
-      let left = { type: "boolean", value: token.value === "true", line: token.line };
-      while (peek() && peek().type === "OPERATOR") {
-        const op = consume("OPERATOR");
-        const right = expression();
-        left = { type: "operation", operator: op.value, left, right, line: op.line };
-      }
-      return left;
+      return { type: "boolean", value: token.value === "true", line: token.line };
     }
 
-    // null
     if (token.type === "KEYWORD" && token.value === "null") {
       current++;
       return { type: "null", value: null, line: token.line };
     }
 
-    // undefined
     if (token.type === "KEYWORD" && token.value === "undefined") {
       current++;
       return { type: "undefined", value: undefined, line: token.line };
     }
 
-
-    // Identificador simples (sem acesso ainda)
-    if (token.type === "IDENTIFIER") {
+    // Funções nativas usadas como expressão
+    if (token.type === "KEYWORD" && 
+        ["parseInt", "parseFloat", "typeof", "prompt"].includes(token.value)) {
       current++;
-      let left = { type: "identifier", value: token.value, line: token.line };
-      while (peek() && peek().type === "OPERATOR") {
-        const op = consume("OPERATOR");
-        const right = expression();
-        left = { type: "operation", operator: op.value, left, right, line: op.line };
+      consume("PUNCTUATION", "(");
+      let args = [];
+      if (!(peek().type === "PUNCTUATION" && peek().value === ")")) {
+        args.push(expression());
+        while (peek().type === "PUNCTUATION" && peek().value === ",") {
+          consume("PUNCTUATION", ",");
+          args.push(expression());
+        }
       }
-      return left;
+      consume("PUNCTUATION", ")");
+      return { type: "nativeCall", name: token.value, args, line: token.line };
     }
 
-    // Array literal
+    // Identificador, chamada de função ou acesso a array
+    if (token.type === "IDENTIFIER") {
+      current++;
+      
+      // Chamada de função
+      if (peek() && peek().type === "PUNCTUATION" && peek().value === "(") {
+        consume("PUNCTUATION", "(");
+        let args = [];
+        if (!(peek().type === "PUNCTUATION" && peek().value === ")")) {
+          args.push(expression());
+          while (peek().type === "PUNCTUATION" && peek().value === ",") {
+            consume("PUNCTUATION", ",");
+            args.push(expression());
+          }
+        }
+        consume("PUNCTUATION", ")");
+        return { type: "functionCall", name: token.value, args, line: token.line };
+      } 
+      // Acesso a array
+      else if (peek() && peek().type === "PUNCTUATION" && peek().value === "[") {
+        consume("PUNCTUATION", "[");
+        const index = expression();
+        consume("PUNCTUATION", "]");
+        return { type: "arrayAccess", array: token.value, index, line: token.line };
+      }
+      
+      return { type: "identifier", value: token.value, line: token.line };
+    }
+
     if (token.type === "PUNCTUATION" && token.value === "[") {
       return arrayExpression();
     }
 
-    // Object literal
     if (token.type === "PUNCTUATION" && token.value === "{") {
       return objectExpression();
     }
@@ -292,7 +432,6 @@ function Parser(tokens) {
     return { type: "objectLiteral", fields, line: tkObj.line };
   }
 
-  // API externa
   return { parse: programa };
 }
 
