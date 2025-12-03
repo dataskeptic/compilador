@@ -1,6 +1,5 @@
 let lista = [1, 2, 3];
 let numero = 10;
-
 let soma = 0;
-soma = numero + lista[0];
-print(lista[2]);
+soma = (numero + lista[0]);
+console.log(lista[2]);
