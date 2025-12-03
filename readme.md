@@ -193,7 +193,7 @@ node index.js exemplos/erro_redeclaracao.txt
 node index.js testes/erro_divisao_zero.txt && java -jar jasmin.jar out/out.j && java Main
 # Saída: Exception in thread "main" java.lang.ArithmeticException: / by zero
 
-# Índice negativo
+# Índice negativo (i = 0 - 1)
 node index.js testes/erro_indice_negativo.txt && java -jar jasmin.jar out/out.j && java Main
 # Saída: Exception in thread "main" java.lang.ArrayIndexOutOfBoundsException: -1
 

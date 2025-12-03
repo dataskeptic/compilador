@@ -13,53 +13,30 @@
   .limit stack 100
   .limit locals 3
 
-  iconst_5
-  invokestatic Main/dobro(I)I
-  istore 1
-  getstatic java/lang/System/out Ljava/io/PrintStream;
-  iload 1
-  invokevirtual java/io/PrintStream/println(I)V
-  bipush 10
-  bipush 20
-  invokestatic Main/soma(II)I
+  bipush 3
+  newarray int
+  dup
+  bipush 0
+  iconst_1
+  iastore
+  dup
+  bipush 1
+  iconst_2
+  iastore
+  dup
+  bipush 2
+  iconst_3
+  iastore
+  astore 1
+  iconst_0
+  iconst_1
+  isub
   istore 2
   getstatic java/lang/System/out Ljava/io/PrintStream;
+  aload 1
   iload 2
-  invokevirtual java/io/PrintStream/println(I)V
-  getstatic java/lang/System/out Ljava/io/PrintStream;
-  iconst_3
-  iconst_4
-  invokestatic Main/soma(II)I
-  invokestatic Main/dobro(I)I
+  iaload
   invokevirtual java/io/PrintStream/println(I)V
 
   return
-.end method
-
-; função dobro
-.method public static dobro(I)I
-  .limit stack 100
-  .limit locals 1
-
-  iload 0
-  iconst_2
-  imul
-  ireturn
-
-  iconst_0
-  ireturn
-.end method
-
-; função soma
-.method public static soma(II)I
-  .limit stack 100
-  .limit locals 2
-
-  iload 0
-  iload 1
-  iadd
-  ireturn
-
-  iconst_0
-  ireturn
 .end method
