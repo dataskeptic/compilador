@@ -2,6 +2,22 @@
 
 **Trabalho Final – Compiladores – UFPI 2025.2**
 
+---
+
+## Sumário
+
+1. [Visão Geral](#visão-geral)
+2. [Arquitetura](#arquitetura)
+3. [Instalação](#instalação)
+4. [Como Usar](#como-usar)
+5. [Regras de Tradução (AST → Jasmin)](#regras-de-tradução-ast--jasmin)
+6. [Exemplos](#exemplos)
+7. [Funcionalidades](#funcionalidades)
+8. [Testes](#testes)
+9. [Autoria](#autoria)
+
+---
+
 ## Visão Geral
 
 Compilador para JavaScript simplificado com:
@@ -69,6 +85,11 @@ sudo apt install nodejs npm default-jdk
 # 2. Java JDK: baixe de https://adoptium.net/
 # 3. jasmin.jar: baixe de http://jasmin.sourceforge.net/
 ```
+
+**Links:**
+- [Node.js](https://nodejs.org/)
+- [Java JDK (Adoptium)](https://adoptium.net/)
+- [Jasmin](http://jasmin.sourceforge.net/)
 
 ## Como Usar
 
