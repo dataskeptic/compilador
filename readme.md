@@ -37,10 +37,10 @@ Este projeto implementa um compilador completo para uma linguagem baseada em Jav
 ├─────────────────────────────────────────────────────────────────────┤
 │  Código Fonte (.txt)                                                │
 │        ↓                                                            │
-│  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐           │
-│  │  Scanner    │ →   │   Parser    │ →   │  Semântico  │           │
-│  │ (Léxico)    │     │ (Sintático) │     │  (Tipos)    │           │
-│  └─────────────┘     └─────────────┘     └─────────────┘           │
+│  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐            │
+│  │  Scanner    │ →   │   Parser    │ →   │  Semântico  │            │
+│  │ (Léxico)    │     │ (Sintático) │     │  (Tipos)    │            │
+│  └─────────────┘     └─────────────┘     └─────────────┘            │
 │        ↓                   ↓                   ↓                    │
 │    [Tokens]            [AST]            [AST Validada]              │
 └─────────────────────────────────────────────────────────────────────┘
@@ -48,10 +48,10 @@ Este projeto implementa um compilador completo para uma linguagem baseada em Jav
 ┌─────────────────────────────────────────────────────────────────────┐
 │                         BACK-END                                    │
 ├─────────────────────────────────────────────────────────────────────┤
-│  ┌──────────────────┐          ┌──────────────────┐                │
-│  │   CodeGen JS     │          │  CodeGen Jasmin  │                │
-│  │  (codegen.js)    │          │(codegen_jasmin.js│                │
-│  └────────┬─────────┘          └────────┬─────────┘                │
+│  ┌──────────────────┐          ┌──────────────────┐                 │
+│  │   CodeGen JS     │          │  CodeGen Jasmin  │                 │
+│  │  (codegen.js)    │          │(codegen_jasmin.js│                 │
+│  └────────┬─────────┘          └────────┬─────────┘                 │
 │           ↓                             ↓                           │
 │     out/out.js                    out/out.j                         │
 │    (JavaScript)               (Código Jasmin)                       │
