@@ -134,7 +134,8 @@ function generateJasminProgram(ast, className = "Main") {
           const isArray = cmd.value && cmd.value.type === "arrayLiteral";
           const isString = cmd.value && cmd.value.type === "string";
           const isObject = cmd.value && cmd.value.type === "objectLiteral";
-          const isRef = isArray || isString || isObject;
+          const isNull = cmd.value && (cmd.value.type === "null" || cmd.value.type === "undefined");
+          const isRef = isArray || isString || isObject || isNull;
           const slot = getOrCreateSlot(cmd.name, isRef);
 
           if (isArray) {
@@ -145,6 +146,9 @@ function generateJasminProgram(ast, className = "Main") {
             emit(`  astore ${slot}`);
           } else if (isObject) {
             genObjectLiteral(cmd.value);
+            emit(`  astore ${slot}`);
+          } else if (isNull) {
+            emit("  aconst_null");
             emit(`  astore ${slot}`);
           } else {
             genExpr(cmd.value);
@@ -323,7 +327,8 @@ function generateJasminProgram(ast, className = "Main") {
 
         case "null":
         case "undefined":
-          emit("  aconst_null");
+          // Null/undefined não podem ser usados como int - retorna 0
+          emit("  iconst_0");
           break;
 
         case "identifier": {
@@ -572,9 +577,24 @@ function generateJasminProgram(ast, className = "Main") {
       for (const field of expr.fields) {
         emit("  dup"); // duplica referência do HashMap
         emit(`  ldc "${field.name}"`);
-        // Valor - converter int para Integer
-        genExpr(field.value);
-        emit("  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;");
+        // Valor - verificar tipo
+        if (field.value.type === "string") {
+          let str = field.value.value;
+          if ((str.startsWith('"') && str.endsWith('"')) || 
+              (str.startsWith("'") && str.endsWith("'"))) {
+            str = str.slice(1, -1);
+          }
+          emit(`  ldc "${str}"`);
+        } else if (field.value.type === "number") {
+          genExpr(field.value);
+          emit("  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;");
+        } else if (field.value.type === "boolean") {
+          emit(field.value.value ? "  iconst_1" : "  iconst_0");
+          emit("  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;");
+        } else {
+          genExpr(field.value);
+          emit("  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;");
+        }
         emit("  invokevirtual java/util/HashMap/put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
         emit("  pop"); // descarta retorno do put
       }
