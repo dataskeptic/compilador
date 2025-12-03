@@ -635,6 +635,102 @@ Código Jasmin gerado em out/out.j
 
 ---
 
+### Exemplo 9: Erro de Runtime - Divisão por Zero (Back-end)
+
+**Arquivo:** `testes/erro_divisao_zero.txt`
+```javascript
+let a = 10;
+let b = 0;
+let resultado = a / b;
+print(resultado);
+```
+
+**Execução:**
+```bash
+$ node index.js testes/erro_divisao_zero.txt && java -jar jasmin.jar out/out.j && java Main
+Compilando: testes/erro_divisao_zero.txt
+
+Programa aceito.
+Programa semanticamente válido!
+
+Código JS gerado em out/out.js
+Código Jasmin gerado em out/out.j
+
+Generated: Main.class
+Exception in thread "main" java.lang.ArithmeticException: / by zero
+        at Main.main(out.j)
+```
+
+---
+
+### Exemplo 10: Erro de Runtime - Índice Negativo (Back-end)
+
+**Arquivo:** `testes/erro_indice_negativo.txt`
+```javascript
+let arr = [1, 2, 3];
+let i = -1;
+print(arr[i]);
+```
+
+**Execução:**
+```bash
+$ node index.js testes/erro_indice_negativo.txt && java -jar jasmin.jar out/out.j && java Main
+Compilando: testes/erro_indice_negativo.txt
+
+Programa aceito.
+Programa semanticamente válido!
+
+Código JS gerado em out/out.js
+Código Jasmin gerado em out/out.j
+
+Generated: Main.class
+Exception in thread "main" java.lang.ArrayIndexOutOfBoundsException: -1
+        at Main.main(out.j)
+```
+
+---
+
+### Exemplo 11: Erro de Runtime - Índice Fora dos Limites (Back-end)
+
+**Arquivo:** `testes/erro_indice_fora.txt`
+```javascript
+let arr = [10, 20, 30];
+let i = 100;
+print(arr[i]);
+```
+
+**Execução:**
+```bash
+$ node index.js testes/erro_indice_fora.txt && java -jar jasmin.jar out/out.j && java Main
+Compilando: testes/erro_indice_fora.txt
+
+Programa aceito.
+Programa semanticamente válido!
+
+Código JS gerado em out/out.js
+Código Jasmin gerado em out/out.j
+
+Generated: Main.class
+Exception in thread "main" java.lang.ArrayIndexOutOfBoundsException: 100
+        at Main.main(out.j)
+```
+
+---
+
+## Tipos de Erros
+
+| Fase | Tipo | Exemplo | Quando Detecta |
+|------|------|---------|----------------|
+| Léxico | Caractere inválido | `let x = @10;` | Compilação |
+| Sintático | Estrutura incorreta | `let x = ;` | Compilação |
+| Semântico | Variável não declarada | `x = 10;` | Compilação |
+| Semântico | Reatribuir constante | `const PI = 3; PI = 4;` | Compilação |
+| Semântico | Redeclaração | `let x = 1; let x = 2;` | Compilação |
+| **Runtime** | Divisão por zero | `let r = 10 / 0;` | **Execução JVM** |
+| **Runtime** | Índice inválido | `arr[100]` (dinâmico) | **Execução JVM** |
+
+---
+
 ## Funcionalidades Suportadas
 
 ### Back-end JavaScript (Completo)

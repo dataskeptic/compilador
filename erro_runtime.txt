@@ -1,0 +1,4 @@
+// Erro de runtime: índice dinâmico fora dos limites
+let arr = [1, 2, 3];
+let i = 10;
+print(arr[i]);
