@@ -163,20 +163,44 @@ node index.js exemplos/exemplo_fatorial.txt && java -jar jasmin.jar out/out.j &&
 ```
 
 ### Erros de Front-end (Compilação)
-| Tipo | Exemplo | Arquivo |
-|------|---------|---------|
-| Léxico | `let x = @10;` | `exemplos/erro_lexico.txt` |
-| Sintático | `let x = ;` | `exemplos/erro_sintatico.txt` |
-| Semântico | `x = 10;` (não declarada) | `exemplos/erro_var_nao_declarada.txt` |
-| Semântico | `const PI=3; PI=4;` | `exemplos/erro_const.txt` |
-| Semântico | `let x=1; let x=2;` | `exemplos/erro_redeclaracao.txt` |
+
+```bash
+# Erro Léxico - caractere inválido '@'
+node index.js exemplos/erro_lexico.txt
+# Saída: Erro léxico na linha 1: token inválido perto de '@10;'
+
+# Erro Sintático - falta expressão após '='
+node index.js exemplos/erro_sintatico.txt
+# Saída: Erro de sintaxe na linha 1: esperado expressão, mas encontrado ';'
+
+# Erro Semântico - variável não declarada
+node index.js exemplos/erro_var_nao_declarada.txt
+# Saída: Erro semântico: variável 'x' não declarada antes do uso (linha 1)
+
+# Erro Semântico - reatribuição de constante
+node index.js exemplos/erro_const.txt
+# Saída: Erro semântico: não é permitido reatribuir constante 'PI' (linha 2)
+
+# Erro Semântico - redeclaração de variável
+node index.js exemplos/erro_redeclaracao.txt
+# Saída: Erro semântico: variável 'x' já declarada no escopo atual na linha 2
+```
 
 ### Erros de Back-end (Runtime JVM)
-| Tipo | Exemplo | Arquivo |
-|------|---------|---------|
-| `ArithmeticException` | `10 / 0` | `testes/erro_divisao_zero.txt` |
-| `ArrayIndexOutOfBounds` | `arr[-1]` | `testes/erro_indice_negativo.txt` |
-| `ArrayIndexOutOfBounds` | `arr[100]` | `testes/erro_indice_fora.txt` |
+
+```bash
+# Divisão por zero
+node index.js testes/erro_divisao_zero.txt && java -jar jasmin.jar out/out.j && java Main
+# Saída: Exception in thread "main" java.lang.ArithmeticException: / by zero
+
+# Índice negativo
+node index.js testes/erro_indice_negativo.txt && java -jar jasmin.jar out/out.j && java Main
+# Saída: Exception in thread "main" java.lang.ArrayIndexOutOfBoundsException: -1
+
+# Índice fora dos limites
+node index.js testes/erro_indice_fora.txt && java -jar jasmin.jar out/out.j && java Main
+# Saída: Exception in thread "main" java.lang.ArrayIndexOutOfBoundsException: 100
+```
 
 ## Funcionalidades
 
